@@ -82,11 +82,12 @@
 # 📋 预设模板一览（选一个就行）
 # ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
 #
-#   1️⃣ always_on        全天候，有新增就推（默认）
-#   2️⃣ morning_evening  全天推送 + 晚间汇总（推荐大多数人）
-#   3️⃣ office_hours     工作日三段式：到岗速览→午间热点→收工汇总
-#   4️⃣ night_owl        午后速览 + 深夜全天汇总
-#   5️⃣ custom           完全自定义（需要编辑本文件底部的 custom 段）
+#   1️⃣ always_on             全天候，有新增就推（默认）
+#   2️⃣ morning_evening       全天推送 + 晚间汇总（推荐大多数人）
+#   3️⃣ office_hours          工作日三段式：到岗速览→午间热点→收工汇总
+#   4️⃣ night_owl             午后速览 + 深夜全天汇总
+#   5️⃣ daily_morning_digest  每日早间一次汇总，适合 GitHub Actions 跨时区定时推送
+#   6️⃣ custom                完全自定义（需要编辑本文件底部的 custom 段）
 #
 # 想自定义？两种方式：
 #   1. 直接翻到本文件底部的「自定义模式」部分
@@ -334,6 +335,53 @@ presets:
     day_plans:
       all_day:
         periods: ["afternoon_peek", "late_night"]
+    week_map:
+      1: "all_day"
+      2: "all_day"
+      3: "all_day"
+      4: "all_day"
+      5: "all_day"
+      6: "all_day"
+      7: "all_day"
+
+
+  # ───────────────────────────────────────────────────────────
+  # 5️⃣ daily_morning_digest - 每日早报
+  #
+  # 全天静默采集，只在早间窗口推送一次当日汇总。
+  # 适合：GitHub Actions、跨时区用户、希望每天固定早上看一条汇总的人
+  #
+  # 默认（全天）：推送 ✗ | AI分析 ✗
+  # 早间简报：推送 ✓ | AI分析 ✓ | 只推/分析一次
+  # ───────────────────────────────────────────────────────────
+  daily_morning_digest:
+    name: "每日早报"
+    description: "全天采集，早间固定推送一次当日汇总。适合时区敏感的 GitHub Actions 场景。"
+
+    default:
+      collect: true
+      analyze: false
+      ai_mode: "current"
+      push: false
+      report_mode: "current"
+      once:
+        analyze: true
+        push: true
+
+    periods:
+      morning_digest:
+        name: "早间简报"
+        start: "07:00"
+        end: "09:00"
+        analyze: true
+        ai_mode: "daily"
+        push: true
+        report_mode: "daily"
+        # once 继承 default（analyze: true, push: true）→ 只推/分析一次
+
+    day_plans:
+      all_day:
+        periods: ["morning_digest"]
     week_map:
       1: "all_day"
       2: "all_day"
