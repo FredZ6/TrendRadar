@@ -1,8 +1,8 @@
-# GitHub Actions Telegram Daily Push Design
+# GitHub Actions Telegram Four-Hour Push Design
 
 ## Summary
 
-Deploy TrendRadar on GitHub Actions so it delivers one Telegram push each day at approximately `07:00` in `America/Winnipeg`, while remaining stable across daylight saving time changes.
+Deploy TrendRadar on GitHub Actions so it delivers Telegram pushes every four hours starting at `07:00` in `America/Winnipeg`, while remaining stable across daylight saving time changes.
 
 ## Context
 
@@ -22,10 +22,10 @@ Deploy TrendRadar on GitHub Actions so it delivers one Telegram push each day at
 - Maintain separate winter/summer UTC crons.
 - Reject: operationally brittle and unnecessary because the app already has a timezone-aware scheduler.
 
-### Option 3: Periodic wake-up plus app-level morning window
+### Option 3: Periodic wake-up plus app-level local-time windows
 
 - Keep GitHub Actions waking the app periodically.
-- Add a dedicated schedule preset that only pushes once inside a Winnipeg morning window.
+- Add a dedicated schedule preset that pushes once in each Winnipeg local-time window.
 - Remove the repository’s 7-day trial auto-disable behavior for permanent personal use.
 - Chosen: this is the only approach that stays correct through DST without manual cron maintenance.
 
@@ -33,23 +33,28 @@ Deploy TrendRadar on GitHub Actions so it delivers one Telegram push each day at
 
 ### Architecture
 
-- Add a new scheduler preset in [`config/timeline.yaml`](/Users/fredz/Downloads/trend Radar/config/timeline.yaml) for a once-per-day morning digest.
+- Add a new scheduler preset in [`config/timeline.yaml`](/Users/fredz/Downloads/trend Radar/config/timeline.yaml) for every-four-hours delivery.
 - The preset will:
   - always collect data,
-  - stay quiet outside the morning window,
-  - analyze and push once during the morning window,
-  - use `daily` report mode so the morning push summarizes all collected items for that local day so far.
+  - stay quiet outside the configured push windows,
+  - analyze and push once during each active window,
+  - use `daily` report mode so every push summarizes all collected items for that local day so far.
 - The GitHub Actions workflow will:
   - keep periodic wake-ups,
   - inject `TIMEZONE=America/Winnipeg`,
-  - inject `SCHEDULE_PRESET=daily_morning_digest`,
-  - remove the 7-day auto-disable/check-in logic.
+  - inject `SCHEDULE_PRESET=every_four_hours_digest`.
 
 ### Time Behavior
 
-- The morning push window will span two hours, not a single minute.
+- The push windows will span two hours each, not a single minute.
 - Reason: GitHub Actions scheduled runs can drift, and the repository’s own timeline docs already recommend wider windows for reliability.
-- `once.push: true` ensures only the first run inside that window pushes that day.
+- `once.push: true` ensures only the first run inside each window pushes.
+- The user-approved Winnipeg local schedule is:
+  - `07:00-09:00`
+  - `11:00-13:00`
+  - `15:00-17:00`
+  - `19:00-21:00`
+  - `23:00-01:00`
 
 ### Telegram Behavior
 
@@ -67,13 +72,13 @@ Deploy TrendRadar on GitHub Actions so it delivers one Telegram push each day at
 
 ### Testing
 
-- Add a regression test around the scheduler preset:
-  - inside the morning window: push enabled, once enabled, daily mode,
-  - outside the window: push disabled.
+- Add a regression test around the new preset:
+  - workflow points at the new preset,
+  - timeline defines the five local-time windows,
+  - old trial-expiration logic remains absent.
 - Verify the targeted test run locally.
 
 ## Expected Outcome
 
 - GitHub Actions runs continuously enough to survive DST and scheduler drift.
-- TrendRadar sends at most one Telegram morning digest per Winnipeg day.
-- The repo no longer disables itself after 7 days.
+- TrendRadar sends at most one Telegram digest in each of the five approved Winnipeg time windows.

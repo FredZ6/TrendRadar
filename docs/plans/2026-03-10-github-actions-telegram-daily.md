@@ -1,16 +1,16 @@
-# GitHub Actions Telegram Daily Push Implementation Plan
+# GitHub Actions Telegram Four-Hour Push Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add a permanent GitHub Actions deployment path that pushes one Telegram morning digest each Winnipeg day using the existing TrendRadar notification stack.
+**Goal:** Change the deployed GitHub Actions path so it pushes Telegram digests every four hours starting at 07:00 Winnipeg time using the existing TrendRadar notification stack.
 
-**Architecture:** Reuse the current `python -m trendradar` workflow entrypoint and Telegram sender. Introduce a dedicated scheduler preset for a once-per-day morning digest, then make the workflow opt into that preset and Winnipeg timezone through environment variables. Remove the repository-specific 7-day auto-disable logic so the automation behaves like a normal personal deployment.
+**Architecture:** Reuse the current `python -m trendradar` workflow entrypoint and Telegram sender. Introduce a dedicated scheduler preset for five Winnipeg local-time push windows, then make the workflow opt into that preset through environment variables. Keep periodic wake-ups so DST stays correct.
 
 **Tech Stack:** Python 3.10, `unittest`, YAML config, GitHub Actions
 
 ---
 
-### Task 1: Add the scheduler regression test
+### Task 1: Update the scheduler regression test
 
 **Files:**
 - Create: `tests/test_daily_morning_digest_schedule.py`
@@ -21,45 +21,50 @@
 
 ```python
 class SchedulerPresetTests(unittest.TestCase):
-    def test_daily_morning_digest_pushes_once_in_morning_window(self):
+    def test_timeline_declares_every_four_hours_digest_preset(self):
         ...
 ```
 
 **Step 2: Run test to verify it fails**
 
 Run: `python -m unittest tests.test_daily_morning_digest_schedule -v`
-Expected: FAIL because the new preset is not defined yet.
+Expected: FAIL because the new preset is not defined yet and the workflow still points to the old one.
 
 **Step 3: Write minimal implementation**
 
 ```yaml
-daily_morning_digest:
-  default:
-    collect: true
-    analyze: false
-    push: false
+every_four_hours_digest:
   periods:
-    morning_digest:
+    morning_1:
       start: "07:00"
       end: "09:00"
-      analyze: true
-      push: true
-      report_mode: "daily"
+    midday_1:
+      start: "11:00"
+      end: "13:00"
+    afternoon_1:
+      start: "15:00"
+      end: "17:00"
+    evening_1:
+      start: "19:00"
+      end: "21:00"
+    night_1:
+      start: "23:00"
+      end: "01:00"
 ```
 
 **Step 4: Run test to verify it passes**
 
-Run: `python -m unittest tests.test_daily_morning_digest_schedule -v`
+Run: `python3 -m unittest tests.test_daily_morning_digest_schedule -v`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
 git add tests/test_daily_morning_digest_schedule.py config/timeline.yaml
-git commit -m "test: cover daily morning digest schedule"
+git commit -m "test: cover every four hours schedule"
 ```
 
-### Task 2: Update the workflow for permanent Winnipeg delivery
+### Task 2: Update the workflow to use the new preset
 
 **Files:**
 - Modify: `.github/workflows/crawler.yml`
@@ -67,37 +72,36 @@ git commit -m "test: cover daily morning digest schedule"
 
 **Step 1: Write the failing expectation**
 
-- Define the behavior in code comments and plan: the workflow must no longer auto-disable after 7 days and must opt into Winnipeg daily-morning scheduling.
+- Define the behavior in code comments and plan: the workflow must keep the Winnipeg timezone and use the new every-four-hours preset.
 
 **Step 2: Verify current workflow does not meet it**
 
-Run: `rg -n "Check Expiration|gh workflow disable|TIMEZONE|SCHEDULE_PRESET" .github/workflows/crawler.yml`
-Expected: finds expiration logic and does not find the needed schedule env vars.
+Run: `rg -n "TIMEZONE|SCHEDULE_PRESET" .github/workflows/crawler.yml`
+Expected: finds the old preset value.
 
 **Step 3: Write minimal implementation**
 
 ```yaml
 env:
   TIMEZONE: America/Winnipeg
-  SCHEDULE_PRESET: daily_morning_digest
+  SCHEDULE_PRESET: every_four_hours_digest
 ```
 
-- Remove the expiration/check-in step.
 - Keep periodic scheduling so the app-level scheduler handles DST-safe local timing.
 
 **Step 4: Verify workflow content**
 
-Run: `rg -n "Check Expiration|gh workflow disable|TIMEZONE|SCHEDULE_PRESET" .github/workflows/crawler.yml`
-Expected: no expiration logic remains; timezone and preset vars are present.
+Run: `rg -n "TIMEZONE|SCHEDULE_PRESET" .github/workflows/crawler.yml`
+Expected: timezone present; preset changed to `every_four_hours_digest`.
 
 **Step 5: Commit**
 
 ```bash
 git add .github/workflows/crawler.yml
-git commit -m "feat: schedule winnipeg daily telegram digest"
+git commit -m "feat: schedule winnipeg four hour telegram digest"
 ```
 
-### Task 3: Document the operational requirements
+### Task 3: Update docs to match the new cadence
 
 **Files:**
 - Modify: `README.md`
@@ -105,32 +109,33 @@ git commit -m "feat: schedule winnipeg daily telegram digest"
 
 **Step 1: Write the failing expectation**
 
-- Document that Winnipeg daily delivery uses GitHub Secrets and that `TELEGRAM_CHAT_ID` must be a real destination chat id, not the bot username.
+- Document that Winnipeg delivery now runs every four hours from 07:00 local time and still depends on a real Telegram destination chat id.
 
 **Step 2: Verify current docs miss this Winnipeg-specific guidance**
 
-Run: `rg -n "America/Winnipeg|daily_morning_digest|TELEGRAM_CHAT_ID" README.md`
-Expected: Telegram secret docs exist, but no Winnipeg preset guidance and no warning about using a real target chat id instead of the bot username.
+Run: `rg -n "America/Winnipeg|daily_morning_digest|every_four_hours_digest|TELEGRAM_CHAT_ID" README.md`
+Expected: docs still refer to the old daily preset.
 
 **Step 3: Write minimal implementation**
 
 ```md
 - Workflow uses `America/Winnipeg`
-- Workflow uses `daily_morning_digest`
+- Workflow uses `every_four_hours_digest`
+- Pushes at 07/11/15/19/23 local time
 - Rotate leaked bot tokens before enabling Actions
 - `TELEGRAM_CHAT_ID` must be the target chat/user/channel ID
 ```
 
 **Step 4: Verify docs**
 
-Run: `rg -n "America/Winnipeg|daily_morning_digest|target chat" README.md`
+Run: `rg -n "America/Winnipeg|every_four_hours_digest|target chat" README.md`
 Expected: new guidance is present.
 
 **Step 5: Commit**
 
 ```bash
 git add README.md
-git commit -m "docs: explain winnipeg telegram deployment"
+git commit -m "docs: explain winnipeg four hour telegram deployment"
 ```
 
 ### Task 4: Run focused verification
@@ -141,13 +146,13 @@ git commit -m "docs: explain winnipeg telegram deployment"
 
 **Step 1: Run targeted tests**
 
-Run: `python -m unittest tests.test_daily_morning_digest_schedule -v`
+Run: `python3 -m unittest tests.test_daily_morning_digest_schedule -v`
 Expected: PASS
 
 **Step 2: Run static content checks**
 
-Run: `rg -n "daily_morning_digest|America/Winnipeg|gh workflow disable" config/timeline.yaml .github/workflows/crawler.yml README.md`
-Expected: preset/timezone present, disable logic absent.
+Run: `rg -n "every_four_hours_digest|America/Winnipeg|07:00|11:00|15:00|19:00|23:00" config/timeline.yaml .github/workflows/crawler.yml README.md`
+Expected: new preset/timezone/windows present.
 
 **Step 3: Record evidence**
 
@@ -157,5 +162,5 @@ Expected: preset/timezone present, disable logic absent.
 
 ```bash
 git add progress.md
-git commit -m "chore: record verification for telegram daily deployment"
+git commit -m "chore: record verification for four hour deployment"
 ```

@@ -1882,7 +1882,7 @@ ai_translation:
 > **如果你使用的是你自己仓库里的这份个人部署版 workflow：**
 > - 已移除 7 天试用 / Check In 自动停用逻辑
 > - 下面这段“签到机制”说明可以忽略
-> - 你只需要保留远程存储配置，并在 workflow 中使用 `TIMEZONE: America/Winnipeg` + `SCHEDULE_PRESET: daily_morning_digest`
+> - 你只需要保留远程存储配置，并在 workflow 中使用 `TIMEZONE: America/Winnipeg` + `SCHEDULE_PRESET: every_four_hours_digest`
 
    **v4.0.0 重要变更**：引入「活跃度检测」机制，GitHub Actions 需定期签到以维持运行。
 
@@ -3188,12 +3188,12 @@ GitHub Actions 使用一种叫 "Cron" 的时间格式，不需要深入理解，
    - GitHub 免费资源有限，跑得太勤可能会被官方限制账号。
    - 而且 Actions 启动本身就有几分钟延迟，太精确的控制没有意义。
 
-> **Winnipeg 每天早上 7 点的 Telegram 推送建议**
-> - 不要把 workflow 改成单次 UTC cron 去“硬算” `America/Winnipeg` 的 07:00；夏令时切换后时间会漂移
+> **Winnipeg 从早上 7 点开始每 4 小时一次的 Telegram 推送建议**
+> - 不要把 workflow 改成单次 UTC cron 去“硬算” `America/Winnipeg` 的 07:00 / 11:00 / 15:00 / 19:00 / 23:00；夏令时切换后时间会漂移
 > - 推荐保留周期性唤醒，并在 `.github/workflows/crawler.yml` 中使用：
 >   - `TIMEZONE: America/Winnipeg`
->   - `SCHEDULE_PRESET: daily_morning_digest`
-> - 这样由程序内部调度来保证温尼伯当地早间窗口只推送一次
+>   - `SCHEDULE_PRESET: every_four_hours_digest`
+> - 这样由程序内部调度来保证温尼伯当地 `07/11/15/19/23` 五个窗口各推送一次
 
 #### 手把手修改步骤
 

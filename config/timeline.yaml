@@ -82,12 +82,13 @@
 # 📋 预设模板一览（选一个就行）
 # ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
 #
-#   1️⃣ always_on             全天候，有新增就推（默认）
-#   2️⃣ morning_evening       全天推送 + 晚间汇总（推荐大多数人）
-#   3️⃣ office_hours          工作日三段式：到岗速览→午间热点→收工汇总
-#   4️⃣ night_owl             午后速览 + 深夜全天汇总
-#   5️⃣ daily_morning_digest  每日早间一次汇总，适合 GitHub Actions 跨时区定时推送
-#   6️⃣ custom                完全自定义（需要编辑本文件底部的 custom 段）
+#   1️⃣ always_on               全天候，有新增就推（默认）
+#   2️⃣ morning_evening         全天推送 + 晚间汇总（推荐大多数人）
+#   3️⃣ office_hours            工作日三段式：到岗速览→午间热点→收工汇总
+#   4️⃣ night_owl               午后速览 + 深夜全天汇总
+#   5️⃣ daily_morning_digest    每日早间一次汇总，适合 GitHub Actions 跨时区定时推送
+#   6️⃣ every_four_hours_digest 从早上 7 点开始每 4 小时推送一次
+#   7️⃣ custom                  完全自定义（需要编辑本文件底部的 custom 段）
 #
 # 想自定义？两种方式：
 #   1. 直接翻到本文件底部的「自定义模式」部分
@@ -382,6 +383,93 @@ presets:
     day_plans:
       all_day:
         periods: ["morning_digest"]
+    week_map:
+      1: "all_day"
+      2: "all_day"
+      3: "all_day"
+      4: "all_day"
+      5: "all_day"
+      6: "all_day"
+      7: "all_day"
+
+
+  # ───────────────────────────────────────────────────────────
+  # 6️⃣ every_four_hours_digest - 四小时汇总
+  #
+  # 全天静默采集，从早上 7 点开始每 4 小时推送一次当日汇总。
+  # 适合：GitHub Actions、跨时区用户、希望固定时段收多次摘要的人
+  #
+  # 默认（全天）：推送 ✗ | AI分析 ✗
+  # 五个窗口：推送 ✓ | AI分析 ✓ | 每个窗口只推/分析一次
+  # ───────────────────────────────────────────────────────────
+  every_four_hours_digest:
+    name: "四小时汇总"
+    description: "全天采集，从早上 7 点开始每 4 小时推送一次当日汇总。"
+
+    default:
+      collect: true
+      analyze: false
+      ai_mode: "current"
+      push: false
+      report_mode: "current"
+      once:
+        analyze: true
+        push: true
+
+    periods:
+      morning_digest:
+        name: "07点简报"
+        start: "07:00"
+        end: "09:00"
+        analyze: true
+        ai_mode: "daily"
+        push: true
+        report_mode: "daily"
+
+      late_morning_digest:
+        name: "11点简报"
+        start: "11:00"
+        end: "13:00"
+        analyze: true
+        ai_mode: "daily"
+        push: true
+        report_mode: "daily"
+
+      afternoon_digest:
+        name: "15点简报"
+        start: "15:00"
+        end: "17:00"
+        analyze: true
+        ai_mode: "daily"
+        push: true
+        report_mode: "daily"
+
+      evening_digest:
+        name: "19点简报"
+        start: "19:00"
+        end: "21:00"
+        analyze: true
+        ai_mode: "daily"
+        push: true
+        report_mode: "daily"
+
+      late_night_digest:
+        name: "23点简报"
+        start: "23:00"
+        end: "01:00"
+        analyze: true
+        ai_mode: "daily"
+        push: true
+        report_mode: "daily"
+
+    day_plans:
+      all_day:
+        periods:
+          - "morning_digest"
+          - "late_morning_digest"
+          - "afternoon_digest"
+          - "evening_digest"
+          - "late_night_digest"
     week_map:
       1: "all_day"
       2: "all_day"

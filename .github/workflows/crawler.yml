@@ -4,8 +4,8 @@ on:
   schedule:
     # GitHub cron 只支持 UTC，不支持 America/Winnipeg 这类本地时区。
     # 因此这里保持“每小时唤醒一次”，实际是否推送由应用内部调度决定：
-    # TIMEZONE=America/Winnipeg + SCHEDULE_PRESET=daily_morning_digest
-    # 这样夏令时切换后仍会保持温尼伯当地早间推送。
+    # TIMEZONE=America/Winnipeg + SCHEDULE_PRESET=every_four_hours_digest
+    # 这样夏令时切换后仍会保持温尼伯当地 07/11/15/19/23 点推送。
     - cron: "5 * * * *"
 
   workflow_dispatch:
@@ -72,7 +72,7 @@ jobs:
         env:
           TIMEZONE: America/Winnipeg
           SCHEDULE_ENABLED: true
-          SCHEDULE_PRESET: daily_morning_digest
+          SCHEDULE_PRESET: every_four_hours_digest
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
