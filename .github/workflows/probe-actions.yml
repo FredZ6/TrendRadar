@@ -1,0 +1,11 @@
+name: Actions Probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emit probe marker
+        run: echo "probe-ok"
